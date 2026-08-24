@@ -1,0 +1,5 @@
+pywin32
+pypdf
+Pillow
+lxml
+tqdm>=4.66

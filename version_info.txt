@@ -1,0 +1,29 @@
+# UTF-8
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(0, 0, 1, 0),
+    prodvers=(0, 0, 1, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [
+          StringStruct('CompanyName', 'TOOL Engineers BV'),
+          StringStruct('FileDescription', 'Rapportage PDF Generator'),
+          StringStruct('FileVersion', '0.0.1'),
+          StringStruct('ProductName', 'Rapportage PDF Generator'),
+          StringStruct('ProductVersion', '0.0.1'),
+          StringStruct('LegalCopyright', '© 2026 TOOL Engineers B.V.'),
+        ]
+      )
+    ]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
