@@ -787,7 +787,7 @@ class App:
 
         self.progress_var = tk.DoubleVar(value=0.0)
         self._last_progress_gui_update = 0.0
-        self._progress_update_interval = 0.20
+        self._progress_update_interval = 0.2
         self._logged_progress_messages = set()
 
        
@@ -1056,7 +1056,9 @@ class App:
         self.progress_var.set(pct)
         self.progress_percent_var.set(f"{pct:.0f}%")
 
-        if eta is None:
+        if pct >= 100.0:
+            eta_text = "Gereed"
+        elif eta is None:
             eta_text = "Geschatte resterende tijd: wordt berekend..."
         else:
             eta_text = f"Geschatte resterende tijd: ± {format_eta(eta)}"

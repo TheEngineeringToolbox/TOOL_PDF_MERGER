@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(0, 0, 2, 0),
-    prodvers=(0, 0, 2, 0),
+    filevers=(0, 0, 3, 0),
+    prodvers=(0, 0, 3, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,9 +17,9 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'TOOL Engineers BV'),
           StringStruct('FileDescription', 'Rapportage PDF Generator'),
-          StringStruct('FileVersion', '0.0.2'),
+          StringStruct('FileVersion', '0.0.3'),
           StringStruct('ProductName', 'Rapportage PDF Generator'),
-          StringStruct('ProductVersion', '0.0.2'),
+          StringStruct('ProductVersion', '0.0.3'),
           StringStruct('LegalCopyright', '© 2026 TOOL Engineers B.V.'),
         ]
       )
