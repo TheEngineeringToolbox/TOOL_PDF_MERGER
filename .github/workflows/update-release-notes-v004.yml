@@ -1,0 +1,31 @@
+name: Update v0.0.4 release notes
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  update-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cat > release-notes.txt <<'EOF'
+          Deze patchrelease verwerkt het nieuwe licentiebeheer voor TOOL PDF Merger.
+
+          - Rechthebbende en licentiegever: TOOL Engineers B.V.
+          - Gratis gebruik, ook binnen bedrijven.
+          - Gratis ongewijzigde verspreiding met behoud van licentie en copyright.
+          - Geen verkoop, verhuur, betaald aanbieden of betaalde bundeling zonder schriftelijke toestemming.
+          - Derde-partijlicenties worden apart gecontroleerd en meegeleverd.
+
+          De door TOOL gepubliceerde release-assets zijn de EXE en de losse licentie/compliance-bestanden: LICENSE.txt, THIRD_PARTY_NOTICES.txt, THIRD_PARTY_LICENSES.txt, dependencies.txt en build-info.json. Er wordt geen eigen ZIP of source-bundle gepubliceerd. GitHub toont daarnaast automatisch platformgegenereerde Source code-archieven.
+          EOF
+          gh release edit v0.0.4 --repo "$GITHUB_REPOSITORY" --notes-file release-notes.txt
