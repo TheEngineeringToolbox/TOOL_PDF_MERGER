@@ -21,7 +21,7 @@ This restriction does not prohibit an organization from using the software inter
 This license does not grant permission to distribute modified versions, derivative works, or rebranded versions of the software. Such distribution requires prior written permission from TOOL Engineers B.V.
 
 5. Third-party components
-This software may include or depend on third-party software. Those components remain subject to their own copyright notices and license terms. Nothing in this license limits rights granted by, or replaces obligations imposed by, a third-party license. See THIRD_PARTY_NOTICES.md and the license materials shipped with a distribution for details.
+This software may include or depend on third-party software. Those components remain subject to their own copyright notices and license terms. Nothing in this license limits rights granted by, or replaces obligations imposed by, a third-party license. See THIRD_PARTY_NOTICES.txt and the license materials shipped with a distribution for details.
 
 6. Trademarks and branding
 This license grants no rights to names, logos, trademarks, or other branding of TOOL Engineers B.V. except as necessary to identify an unmodified copy of the software as required by this license.
