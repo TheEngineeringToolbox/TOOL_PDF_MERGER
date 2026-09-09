@@ -41,7 +41,7 @@ Elke build komt in een eigen map onder `dist/`, met versie, Git-commit, eventuel
 
 ### Branches en releases
 
-Ontwikkel op `codex/development`; `master` blijft de stabiele branch. De bestaande pushtaak pusht de huidige branch. Maak voor een release een pull request van `codex/development` naar `master`. Bouw na het samenvoegen vanuit een schone checkout van `master`, test de EXE met Office en maak vervolgens een Git-tag `vX.Y.Z` bij die commit. Publiceer de geteste EXE bij die release. Builds met `dirty` bevatten lokale wijzigingen en zijn ontwikkelbuilds. De taken maken geen tags, commits of GitHub-releases automatisch.
+Ontwikkel op `codex/development`; `master` blijft de stabiele branch. De bestaande pushtaak pusht de huidige branch. Maak voor een release een pull request van `codex/development` naar `master`. Bouw na het samenvoegen vanuit een schone checkout van `master`, test de EXE met Office en maak vervolgens een Git-tag `vX.Y.Z` bij die commit. Publiceer de geteste EXE en de vereiste licentie/compliance-bestanden als losse release-assets. Upload geen eigen ZIP of source-bundle. GitHub kan bij een release automatisch platformgegenereerde broncode-archieven tonen; die horen niet bij de door TOOL gepubliceerde release-assets. Builds met `dirty` bevatten lokale wijzigingen en zijn ontwikkelbuilds. De taken maken geen tags, commits of GitHub-releases automatisch.
 
 ## Licentie
 
