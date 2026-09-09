@@ -90,17 +90,18 @@ jobs:
           $assets = @(Get-ChildItem -Path $releaseDir.FullName -File | ForEach-Object { $_.FullName })
           $assets += $zip
 
-          $notes = @"
-Deze patchrelease verwerkt het nieuwe licentiebeheer voor TOOL PDF Merger.
-
-- Rechthebbende en licentiegever: TOOL Engineers B.V.
-- Gratis gebruik, ook binnen bedrijven.
-- Gratis ongewijzigde verspreiding met behoud van licentie en copyright.
-- Geen verkoop, verhuur, betaald aanbieden of betaalde bundeling zonder schriftelijke toestemming.
-- Derde-partijlicenties worden apart gecontroleerd en meegeleverd.
-
-De release bevat naast de EXE ook LICENSE.txt, THIRD_PARTY_NOTICES.md, THIRD_PARTY_LICENSES.txt, dependencies.txt en build-info.json.
-"@
+          $noteLines = @(
+            'Deze patchrelease verwerkt het nieuwe licentiebeheer voor TOOL PDF Merger.',
+            '',
+            '- Rechthebbende en licentiegever: TOOL Engineers B.V.',
+            '- Gratis gebruik, ook binnen bedrijven.',
+            '- Gratis ongewijzigde verspreiding met behoud van licentie en copyright.',
+            '- Geen verkoop, verhuur, betaald aanbieden of betaalde bundeling zonder schriftelijke toestemming.',
+            '- Derde-partijlicenties worden apart gecontroleerd en meegeleverd.',
+            '',
+            'De release bevat naast de EXE ook LICENSE.txt, THIRD_PARTY_NOTICES.md, THIRD_PARTY_LICENSES.txt, dependencies.txt en build-info.json.'
+          )
+          $notes = $noteLines -join [Environment]::NewLine
 
           gh release create $env:TAG @assets --repo $env:GITHUB_REPOSITORY --target $env:RELEASE_SHA --title "TOOL PDF Merger $env:TAG" --notes $notes
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
