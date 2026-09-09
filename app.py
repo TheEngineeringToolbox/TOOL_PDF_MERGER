@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 import shutil
+import sys
 import tempfile
-import zipfile
-import subprocess
 import time
-import io
-from pathlib import Path
-from copy import deepcopy
 import tkinter as tk
+import zipfile
+from copy import deepcopy
+from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
+
 from PIL import Image, ImageTk
 
 try:
@@ -26,8 +25,6 @@ except ImportError:
     PdfReader = PdfWriter = None
 
 from lxml import etree as ET
-from tqdm import tqdm
-
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -39,7 +36,9 @@ APP_VERSION = "0.0.3"
 ATTACHMENT_DIR_NAME = "Bijlage"
 TEMPLATE_PATH = Path(r"C:\TOOL\Templates\Rapportage_merge_tool\Bijlage voorbladen.docx")
 
-LOGO_PATH = Path(r"D:\OD\TOOL Engineers BV\TOOL - Documenten\00 - TOOL\01 - PR TOOL\01 - Logo\TOOL Engineers 15-07-2024.png")
+LOGO_PATH = Path(
+    r"D:\OD\TOOL Engineers BV\TOOL - Documenten\00 - TOOL\01 - PR TOOL\01 - Logo\TOOL Engineers 15-07-2024.png"
+)
 WD_EXPORT_FORMAT_PDF = 17
 WD_FORMAT_DOCUMENT_DEFAULT = 16
 WD_DO_NOT_SAVE_CHANGES = 0
@@ -65,9 +64,11 @@ IGNORED_NAMES = {
 # General helpers
 # ---------------------------------------------------------------------------
 
+
 def natural_key(path: Path):
     parts = re.split(r"(\d+)", path.name.lower())
     return [int(p) if p.isdigit() else p for p in parts]
+
 
 def get_template_path():
     if not TEMPLATE_PATH.exists():
@@ -78,6 +79,7 @@ def get_template_path():
         )
 
     return TEMPLATE_PATH
+
 
 def clean_attachment_title(filename: str) -> str:
     """
@@ -138,7 +140,8 @@ def find_attachment_folders(project_dir: Path):
         root = selected / ATTACHMENT_DIR_NAME
         if not root.exists():
             candidates = [
-                p for p in selected.iterdir()
+                p
+                for p in selected.iterdir()
                 if p.is_dir() and p.name.lower() == ATTACHMENT_DIR_NAME.lower()
             ]
             if candidates:
@@ -175,7 +178,8 @@ def find_attachment_folders(project_dir: Path):
         title = match.group(2).strip()
 
         files = [
-            p for p in folder.iterdir()
+            p
+            for p in folder.iterdir()
             if p.is_file()
             and not p.name.startswith("~$")
             and p.name.lower() not in IGNORED_NAMES
@@ -188,9 +192,7 @@ def find_attachment_folders(project_dir: Path):
     result.sort(key=lambda x: attachment_sort_key(x[0]))
 
     if not result:
-        found_dirs = [
-            p.name for p in root.iterdir() if p.is_dir()
-        ]
+        found_dirs = [p.name for p in root.iterdir() if p.is_dir()]
         listing = "\n".join(f" - {name}" for name in found_dirs) or " (geen submappen)"
         raise RuntimeError(
             "Geen bijlagemappen herkend in:\n"
@@ -208,6 +210,7 @@ def find_attachment_folders(project_dir: Path):
 # ---------------------------------------------------------------------------
 # Word/Excel/PowerPoint conversion using Microsoft Office COM
 # ---------------------------------------------------------------------------
+
 
 class OfficeConverter:
     def __init__(self):
@@ -377,10 +380,13 @@ def set_paragraph_text_preserve_format(paragraph, text: str):
         paragraph.remove(run)
 
 
-def make_dynamic_cover(template: Path, output_docx: Path,
-                       attachment_number: str,
-                       attachment_title: str,
-                       item_titles: list[str]):
+def make_dynamic_cover(
+    template: Path,
+    output_docx: Path,
+    attachment_number: str,
+    attachment_title: str,
+    item_titles: list[str],
+):
     """
     Create a one-page cover from the first page of Voorbladen.docx.
 
@@ -437,10 +443,7 @@ def make_dynamic_cover(template: Path, output_docx: Path,
 
         # Everything before the page-break paragraph belongs to page 1.
         first_page_children = children[:break_index]
-        paragraphs = [
-            c for c in first_page_children
-            if c.tag == f"{{{W_NS}}}p"
-        ]
+        paragraphs = [c for c in first_page_children if c.tag == f"{{{W_NS}}}p"]
 
         if not paragraphs:
             raise RuntimeError("Geen inhoud op de eerste templatepagina gevonden.")
@@ -519,7 +522,6 @@ def make_dynamic_cover(template: Path, output_docx: Path,
                 zout.writestr(item, data)
 
 
-
 def format_eta(seconds):
     """Format seconds as HH:MM:SS or MM:SS."""
     if seconds is None:
@@ -559,8 +561,14 @@ class PipelineProgress:
 
         elapsed = now - self.start_time
         fraction = self.completed_units / self.total_units
-        rate = self.completed_units / elapsed if elapsed > 0 and self.completed_units else 0
-        remaining = ((self.total_units - self.completed_units) / rate) if rate > 0 else None
+        rate = (
+            self.completed_units / elapsed
+            if elapsed > 0 and self.completed_units
+            else 0
+        )
+        remaining = (
+            ((self.total_units - self.completed_units) / rate) if rate > 0 else None
+        )
         percent = fraction * 100
 
         self.last_gui_update = now
@@ -577,12 +585,19 @@ class PipelineProgress:
     def force_update(self, message, completed=None):
         self.update(message, completed=completed, force=True)
 
+
 # ---------------------------------------------------------------------------
 # PDF merge
 # ---------------------------------------------------------------------------
 
-def merge_pdfs(pdf_files: list[Path], output_pdf: Path, pipeline=None,
-              merge_start_units=0, merge_units=1):
+
+def merge_pdfs(
+    pdf_files: list[Path],
+    output_pdf: Path,
+    pipeline=None,
+    merge_start_units=0,
+    merge_units=1,
+):
     if PdfReader is None or PdfWriter is None:
         raise RuntimeError(
             "pypdf ontbreekt. Installeer de dependencies met:\n"
@@ -627,9 +642,11 @@ def merge_pdfs(pdf_files: list[Path], output_pdf: Path, pipeline=None,
             completed=merge_start_units + merge_units,
         )
 
+
 # ---------------------------------------------------------------------------
 # Main generation pipeline
 # ---------------------------------------------------------------------------
+
 
 def generate(project_dir: Path, main_docx: Path, progress_callback=None) -> Path:
     project_dir = project_dir.resolve()
@@ -680,9 +697,7 @@ def generate(project_dir: Path, main_docx: Path, progress_callback=None) -> Path
             )
 
             if not files:
-                raise RuntimeError(
-                    f"Bijlage {number} - {title} bevat geen bestanden."
-                )
+                raise RuntimeError(f"Bijlage {number} - {title} bevat geen bestanden.")
 
             item_titles = [p.stem for p in files]
 
@@ -751,9 +766,11 @@ def generate(project_dir: Path, main_docx: Path, progress_callback=None) -> Path
         converter.stop()
         shutil.rmtree(temp_dir, ignore_errors=True)
 
+
 # ---------------------------------------------------------------------------
 # Simple Windows GUI
 # ---------------------------------------------------------------------------
+
 
 def build_preview_items(project_dir: Path, main_docx: Path):
     """Build a simple tree representation of the PDF that will be generated."""
@@ -772,12 +789,11 @@ def build_preview_items(project_dir: Path, main_docx: Path):
 class App:
     def __init__(self, root):
         self.root = root
-        #Title
+        # Title
         self.root.title(f"{COMPANY_NAME} {APP_NAME} v{APP_VERSION}")
-        #Startup size
+        # Startup size
         self.root.geometry("1000x1000")
         self.root.minsize(620, 360)
-
 
         self.project_var = tk.StringVar()
         self.docx_var = tk.StringVar()
@@ -790,7 +806,6 @@ class App:
         self._progress_update_interval = 0.2
         self._logged_progress_messages = set()
 
-       
         frame = tk.Frame(root, padx=20, pady=20)
         frame.pack(fill="both", expand=True)
 
@@ -918,15 +933,24 @@ class App:
         )
         self.status.pack(fill="x")
 
-
         progress_frame = tk.Frame(frame)
         progress_frame.pack(fill="x", pady=(8, 0))
-        self.progress = ttk.Progressbar(progress_frame, variable=self.progress_var, maximum=100, mode="determinate")
+        self.progress = ttk.Progressbar(
+            progress_frame, variable=self.progress_var, maximum=100, mode="determinate"
+        )
         self.progress.pack(side="left", fill="x", expand=True)
         self.progress_percent_var = tk.StringVar(value="0%")
-        tk.Label(progress_frame, textvariable=self.progress_percent_var, width=5, anchor="e", font=("Segoe UI", 9)).pack(side="left", padx=(8, 0))
+        tk.Label(
+            progress_frame,
+            textvariable=self.progress_percent_var,
+            width=5,
+            anchor="e",
+            font=("Segoe UI", 9),
+        ).pack(side="left", padx=(8, 0))
         self.eta_var = tk.StringVar(value="Geschatte resterende tijd: --")
-        tk.Label(frame, textvariable=self.eta_var, anchor="w", font=("Segoe UI", 9)).pack(fill="x", pady=(3, 0))
+        tk.Label(
+            frame, textvariable=self.eta_var, anchor="w", font=("Segoe UI", 9)
+        ).pack(fill="x", pady=(3, 0))
 
         self.log = tk.Text(
             frame,
@@ -946,8 +970,8 @@ class App:
         )
         if not filename:
             return
-       
-       # Log leegmaken bij het selecteren van een nieuw document
+
+        # Log leegmaken bij het selecteren van een nieuw document
         self.clear_log()
 
         docx = Path(filename).resolve()
@@ -990,7 +1014,8 @@ class App:
 
         if not docx_text:
             self.preview_tree.insert(
-                "", "end",
+                "",
+                "end",
                 text="Selecteer een DOCX om de PDF-opbouw te bekijken.",
             )
             return
@@ -1000,7 +1025,8 @@ class App:
 
         if not main_docx.exists():
             self.preview_tree.insert(
-                "", "end",
+                "",
+                "end",
                 text="Het geselecteerde DOCX-bestand bestaat niet.",
             )
             return
@@ -1009,13 +1035,15 @@ class App:
             attachments = find_attachment_folders(project_dir)
         except Exception as exc:
             self.preview_tree.insert(
-                "", "end",
+                "",
+                "end",
                 text=f"Bijlagen niet gevonden: {exc}",
             )
             return
 
         root = self.preview_tree.insert(
-            "", "end",
+            "",
+            "end",
             text=f"Hoofdrapport — {main_docx.name}",
             open=True,
         )
@@ -1036,11 +1064,9 @@ class App:
                 )
 
         if not attachments:
-            self.preview_tree.insert(
-                root, "end", text="Geen bijlagen gevonden."
-            )
+            self.preview_tree.insert(root, "end", text="Geen bijlagen gevonden.")
 
-    #Clear log
+    # Clear log
     def clear_log(self):
         self.log.configure(state="normal")
         self.log.delete("1.0", tk.END)
@@ -1064,9 +1090,7 @@ class App:
             eta_text = f"Geschatte resterende tijd: ± {format_eta(eta)}"
 
         if elapsed is not None:
-            self.eta_var.set(
-                f"Verstreken tijd: {format_eta(elapsed)}  |  {eta_text}"
-            )
+            self.eta_var.set(f"Verstreken tijd: {format_eta(elapsed)}  |  {eta_text}")
         else:
             self.eta_var.set(eta_text)
 
@@ -1134,8 +1158,7 @@ class App:
 
         if not docx_text:
             messagebox.showwarning(
-                APP_NAME,
-                "Kies eerst het gewenste hoofdrapport (.docx)."
+                APP_NAME, "Kies eerst het gewenste hoofdrapport (.docx)."
             )
             return
 
@@ -1144,16 +1167,12 @@ class App:
 
         if not main_docx.exists():
             messagebox.showerror(
-                APP_NAME,
-                "Het geselecteerde DOCX-bestand bestaat niet meer."
+                APP_NAME, "Het geselecteerde DOCX-bestand bestaat niet meer."
             )
             return
 
         if not project_dir.exists():
-            messagebox.showerror(
-                APP_NAME,
-                "De projectmap bestaat niet."
-            )
+            messagebox.showerror(APP_NAME, "De projectmap bestaat niet.")
             return
 
         self.generate_button.config(state="disabled")
@@ -1171,13 +1190,10 @@ class App:
             self.write_log(f"Hoofdrapport: {main_docx.name}")
             self.write_log(f"Projectmap: {project_dir}")
             self.write_log("Start...")
-            output = generate(project_dir, main_docx, self.update_progress)
+            generate(project_dir, main_docx, self.update_progress)
         except Exception as exc:
             self.write_log(f"FOUT: {exc}")
-            messagebox.showerror(
-                APP_NAME,
-                f"Genereren is mislukt:\n\n{exc}"
-            )
+            messagebox.showerror(APP_NAME, f"Genereren is mislukt:\n\n{exc}")
         finally:
             self.generate_button.config(state="normal")
 

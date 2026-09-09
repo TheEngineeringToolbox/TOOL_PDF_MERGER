@@ -1,0 +1,181 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Setup: dependencies installeren",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "-m",
+                "pip",
+                "install",
+                "-r",
+                "requirements-dev.txt"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Code: formatteren",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "-m",
+                "ruff",
+                "format",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Code: opmaak controleren",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "-m",
+                "ruff",
+                "format",
+                "--check",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Code: lint controleren",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "-m",
+                "ruff",
+                "check",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Tests: uitvoeren",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests",
+                "-v"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Controle: alles",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Code: opmaak controleren",
+                "Code: lint controleren",
+                "Tests: uitvoeren"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "App: starten",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "app.py"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "GitHub: push huidige branch (na controles)",
+            "type": "process",
+            "command": "git",
+            "args": [
+                "push",
+                "--set-upstream",
+                "origin",
+                "HEAD"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "Controle: alles",
+            "problemMatcher": []
+        },
+        {
+            "label": "Build: EXE maken",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "build/build_exe.py"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Versie: patch verhogen",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "build/build_exe.py",
+                "--bump",
+                "patch"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Versie: minor verhogen",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "build/build_exe.py",
+                "--bump",
+                "minor"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Versie: major verhogen",
+            "type": "process",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "build/build_exe.py",
+                "--bump",
+                "major"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

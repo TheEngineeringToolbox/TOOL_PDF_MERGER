@@ -361,3 +361,18 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Python development environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+
+# Nieuwe buildoutput (bestaande gevolgde bestanden blijven behouden)
+/temp/
+/dist/
+!/build/
+/build/*
+!/build/build_exe.bat
+!/build/build_version.py
+!/build/build_exe.py
