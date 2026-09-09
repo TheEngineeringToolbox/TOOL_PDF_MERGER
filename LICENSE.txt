@@ -1,6 +1,6 @@
-TOOL FREE USE AND REDISTRIBUTION LICENSE 1.0
+TOOL ENGINEERS B.V. FREE USE AND REDISTRIBUTION LICENSE 1.0
 
-Copyright (c) 2026 TOOL. All rights reserved.
+Copyright (c) 2026 TOOL Engineers B.V. All rights reserved.
 
 1. Permission for use
 You may use this software free of charge for personal, educational, governmental, nonprofit, or commercial internal purposes. Use of the software within a business or other organization is expressly permitted.
@@ -13,21 +13,21 @@ You may copy and redistribute the software, in source or binary form, only if al
 (d) all notices and license terms applicable to third-party components are preserved.
 
 3. No sale, rental, paid access, or paid bundling
-Without prior written permission from TOOL, you may not sell, rent, lease, sublicense for a fee, offer paid access to, or otherwise commercially distribute this software. You may not include this software in a product, software package, service bundle, paid download, paid installation package, or other offering for which money or other consideration is charged, even if the software is only one part of that offering.
+Without prior written permission from TOOL Engineers B.V., you may not sell, rent, lease, sublicense for a fee, offer paid access to, or otherwise commercially distribute this software. You may not include this software in a product, software package, service bundle, paid download, paid installation package, or other offering for which money or other consideration is charged, even if the software is only one part of that offering.
 
 This restriction does not prohibit an organization from using the software internally in the course of its paid or commercial activities.
 
 4. Modified versions
-This license does not grant permission to distribute modified versions, derivative works, or rebranded versions of the software. Such distribution requires prior written permission from TOOL.
+This license does not grant permission to distribute modified versions, derivative works, or rebranded versions of the software. Such distribution requires prior written permission from TOOL Engineers B.V.
 
 5. Third-party components
 This software may include or depend on third-party software. Those components remain subject to their own copyright notices and license terms. Nothing in this license limits rights granted by, or replaces obligations imposed by, a third-party license. See THIRD_PARTY_NOTICES.md and the license materials shipped with a distribution for details.
 
 6. Trademarks and branding
-This license grants no rights to TOOL names, logos, trademarks, or other branding except as necessary to identify an unmodified copy of the software as required by this license.
+This license grants no rights to names, logos, trademarks, or other branding of TOOL Engineers B.V. except as necessary to identify an unmodified copy of the software as required by this license.
 
 7. Written exceptions
-TOOL may grant additional rights, including rights to sell, bundle, modify, or commercially redistribute the software, by separate written agreement. Any such permission applies only to the party and scope stated in that agreement.
+TOOL Engineers B.V. may grant additional rights, including rights to sell, bundle, modify, or commercially redistribute the software, by separate written agreement. Any such permission applies only to the party and scope stated in that agreement.
 
 8. Termination
 Your rights under this license terminate automatically if you materially violate its terms and do not cure the violation within 30 days after becoming aware of it. On termination, you must stop exercising rights granted solely by this license.
@@ -36,7 +36,7 @@ Your rights under this license terminate automatically if you materially violate
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, ACCURACY, OR RELIABILITY.
 
 10. Limitation of liability
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, TOOL AND ITS CONTRIBUTORS SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM OR RELATED TO THE SOFTWARE OR ITS USE.
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, TOOL ENGINEERS B.V. AND ITS CONTRIBUTORS SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM OR RELATED TO THE SOFTWARE OR ITS USE.
 
 11. Governing third-party rights
 If a provision of this license conflicts with a mandatory right or obligation that applies to a third-party component, the applicable third-party license controls for that component only.
