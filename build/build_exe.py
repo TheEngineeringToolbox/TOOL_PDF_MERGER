@@ -125,7 +125,7 @@ def main():
     (output / "dependencies.txt").write_text(packages, encoding="utf-8")
     license_files = {
         ROOT / "LICENSE.txt": output / "LICENSE.txt",
-        ROOT / "THIRD_PARTY_NOTICES.md": output / "THIRD_PARTY_NOTICES.md",
+        ROOT / "THIRD_PARTY_NOTICES.txt": output / "THIRD_PARTY_NOTICES.txt",
         ROOT / "temp" / "THIRD_PARTY_LICENSES.txt": output / "THIRD_PARTY_LICENSES.txt",
     }
     for source_file, destination in license_files.items():
