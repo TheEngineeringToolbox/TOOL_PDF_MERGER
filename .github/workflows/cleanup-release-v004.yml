@@ -1,0 +1,27 @@
+name: Cleanup v0.0.4 release assets
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Replace notice asset and remove custom ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release delete-asset v0.0.4 THIRD_PARTY_NOTICES.md --yes --repo "$GITHUB_REPOSITORY" || true
+          gh release delete-asset v0.0.4 TOOL-PDF-Merger-v0.0.4.zip --yes --repo "$GITHUB_REPOSITORY" || true
+          gh release upload v0.0.4 THIRD_PARTY_NOTICES.txt --clobber --repo "$GITHUB_REPOSITORY"
+          gh release view v0.0.4 --repo "$GITHUB_REPOSITORY" --json assets
