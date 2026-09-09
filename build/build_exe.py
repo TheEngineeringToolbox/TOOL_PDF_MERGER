@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -60,6 +61,7 @@ def main():
         ("-m", "ruff", "format", "--check", "."),
         ("-m", "ruff", "check", "."),
         ("-m", "unittest", "discover", "-s", "tests", "-v"),
+        (str(ROOT / "build" / "check_licenses.py"),),
     ]:
         run(sys.executable, *command)
 
@@ -121,6 +123,15 @@ def main():
         [sys.executable, "-m", "pip", "freeze"], text=True
     )
     (output / "dependencies.txt").write_text(packages, encoding="utf-8")
+    license_files = {
+        ROOT / "LICENSE.txt": output / "LICENSE.txt",
+        ROOT / "THIRD_PARTY_NOTICES.md": output / "THIRD_PARTY_NOTICES.md",
+        ROOT / "temp" / "THIRD_PARTY_LICENSES.txt": output / "THIRD_PARTY_LICENSES.txt",
+    }
+    for source_file, destination in license_files.items():
+        if not source_file.is_file():
+            raise RuntimeError(f"Licentiebestand ontbreekt: {source_file}")
+        shutil.copy2(source_file, destination)
     print(f"Build geslaagd: {executable}")
 
 

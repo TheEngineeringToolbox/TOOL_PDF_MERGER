@@ -42,3 +42,13 @@ Elke build komt in een eigen map onder `dist/`, met versie, Git-commit, eventuel
 ### Branches en releases
 
 Ontwikkel op `codex/development`; `master` blijft de stabiele branch. De bestaande pushtaak pusht de huidige branch. Maak voor een release een pull request van `codex/development` naar `master`. Bouw na het samenvoegen vanuit een schone checkout van `master`, test de EXE met Office en maak vervolgens een Git-tag `vX.Y.Z` bij die commit. Publiceer de geteste EXE bij die release. Builds met `dirty` bevatten lokale wijzigingen en zijn ontwikkelbuilds. De taken maken geen tags, commits of GitHub-releases automatisch.
+
+## Licentie
+
+TOOL PDF Merger valt onder de aangepaste **TOOL Engineers B.V. Free Use and Redistribution License 1.0** in `LICENSE.txt`.
+
+Samengevat mag de software gratis worden gebruikt, ook intern binnen commerciële organisaties, en gratis in ongewijzigde vorm worden doorgegeven met behoud van de licentie- en copyrightvermeldingen. Zonder voorafgaande schriftelijke toestemming van **TOOL Engineers B.V.** mag de software niet worden verkocht, verhuurd, tegen betaling toegankelijk worden gemaakt, in een betaald softwarepakket worden opgenomen of in gewijzigde vorm worden verspreid. De volledige tekst in `LICENSE.txt` is leidend.
+
+Derde-partijcomponenten behouden hun eigen licenties. Zie `THIRD_PARTY_NOTICES.md`. Voer na installatie van `requirements-dev.txt` handmatig `python build/check_licenses.py` uit om de actuele runtime-licenties te controleren. Dezelfde controle draait automatisch in GitHub Actions en als onderdeel van de releasebuild.
+
+Een geslaagde releasebuild plaatst naast de EXE ook `LICENSE.txt`, `THIRD_PARTY_NOTICES.md` en een uit de actieve buildomgeving gegenereerd `THIRD_PARTY_LICENSES.txt`. Nieuwe dependencylicenties die niet in de gecontroleerde allow-list vallen blokkeren de compliancecheck totdat ze expliciet zijn beoordeeld.
