@@ -45,9 +45,9 @@ Ontwikkel op `codex/development`; `master` blijft de stabiele branch. De bestaan
 
 ## Licentie
 
-TOOL PDF Merger valt onder de aangepaste **TOOL Free Use and Redistribution License 1.0** in `LICENSE.txt`.
+TOOL PDF Merger valt onder de aangepaste **TOOL Engineers B.V. Free Use and Redistribution License 1.0** in `LICENSE.txt`.
 
-Samengevat mag de software gratis worden gebruikt, ook intern binnen commerciële organisaties, en gratis in ongewijzigde vorm worden doorgegeven met behoud van de licentie- en copyrightvermeldingen. Zonder voorafgaande schriftelijke toestemming van TOOL mag de software niet worden verkocht, verhuurd, tegen betaling toegankelijk worden gemaakt, in een betaald softwarepakket worden opgenomen of in gewijzigde vorm worden verspreid. De volledige tekst in `LICENSE.txt` is leidend.
+Samengevat mag de software gratis worden gebruikt, ook intern binnen commerciële organisaties, en gratis in ongewijzigde vorm worden doorgegeven met behoud van de licentie- en copyrightvermeldingen. Zonder voorafgaande schriftelijke toestemming van **TOOL Engineers B.V.** mag de software niet worden verkocht, verhuurd, tegen betaling toegankelijk worden gemaakt, in een betaald softwarepakket worden opgenomen of in gewijzigde vorm worden verspreid. De volledige tekst in `LICENSE.txt` is leidend.
 
 Derde-partijcomponenten behouden hun eigen licenties. Zie `THIRD_PARTY_NOTICES.md`. Voer na installatie van `requirements-dev.txt` handmatig `python build/check_licenses.py` uit om de actuele runtime-licenties te controleren. Dezelfde controle draait automatisch in GitHub Actions en als onderdeel van de releasebuild.
 
