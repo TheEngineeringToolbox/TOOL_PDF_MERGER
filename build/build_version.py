@@ -1,15 +1,15 @@
-from pathlib import Path
-from datetime import datetime
 import re
 import sys
+from datetime import datetime
+from pathlib import Path
 
 APP_FILE = Path(sys.argv[1] if len(sys.argv) > 1 else "app.py")
-OUTPUT_FILE = Path("version_info.txt")
+OUTPUT_FILE = Path(sys.argv[2] if len(sys.argv) > 2 else "version_info.txt")
 
 COPYRIGHT = f"© {datetime.now().year} TOOL Engineers B.V."
 
 text = APP_FILE.read_text(encoding="utf-8")
-match = re.search(r'^\s*APP_VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', text, re.MULTILINE)
+match = re.search(r"^\s*APP_VERSION\s*=\s*[\"\']([^\"\']+)[\"\']", text, re.MULTILINE)
 
 if not match:
     raise RuntimeError(f"APP_VERSION niet gevonden in {APP_FILE}")
@@ -17,13 +17,13 @@ if not match:
 version = match.group(1).strip()
 parts = version.split(".")
 
-if not all(part.isdigit() for part in parts):
+if len(parts) != 3 or not all(part.isdigit() and int(part) <= 65535 for part in parts):
     raise RuntimeError(f"Ongeldige APP_VERSION: {version!r}")
 
 parts = (parts + ["0", "0", "0", "0"])[:4]
 v = ", ".join(parts)
 
-version_info = f'''# UTF-8
+version_info = f"""# UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
     filevers=({v}),
@@ -52,7 +52,8 @@ VSVersionInfo(
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]
 )
-'''
+"""
 
+OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 OUTPUT_FILE.write_text(version_info, encoding="utf-8")
 print(f"Windows versie-informatie aangemaakt: {version}")
