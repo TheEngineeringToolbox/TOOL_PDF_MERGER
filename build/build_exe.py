@@ -123,11 +123,15 @@ def main():
         [sys.executable, "-m", "pip", "freeze"], text=True
     )
     (output / "dependencies.txt").write_text(packages, encoding="utf-8")
-    for filename in ["LICENSE.txt", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES.txt"]:
-        source_file = ROOT / filename
+    license_files = {
+        ROOT / "LICENSE.txt": output / "LICENSE.txt",
+        ROOT / "THIRD_PARTY_NOTICES.md": output / "THIRD_PARTY_NOTICES.md",
+        ROOT / "temp" / "THIRD_PARTY_LICENSES.txt": output / "THIRD_PARTY_LICENSES.txt",
+    }
+    for source_file, destination in license_files.items():
         if not source_file.is_file():
             raise RuntimeError(f"Licentiebestand ontbreekt: {source_file}")
-        shutil.copy2(source_file, output / filename)
+        shutil.copy2(source_file, destination)
     print(f"Build geslaagd: {executable}")
 
 
