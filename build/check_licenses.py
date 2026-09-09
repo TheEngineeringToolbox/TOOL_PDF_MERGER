@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT_PATH = ROOT / "THIRD_PARTY_LICENSES.txt"
+REPORT_PATH = ROOT / "temp" / "THIRD_PARTY_LICENSES.txt"
 RUNTIME_PACKAGES = ["pywin32", "pypdf", "Pillow", "lxml", "tqdm", "colorama"]
 
 # These are license families reviewed for the current runtime dependencies.
@@ -88,6 +88,7 @@ def write_report(rows):
                 "",
             ]
         )
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
 
 
