@@ -1,54 +1,102 @@
-# TOOL PDF Merger
+# Rapportage Merger Tool
 
-Windows-app voor het samenvoegen van rapportages en bijlagen. Zie [README.txt](README.txt) voor de gebruikershandleiding.
+De Rapportage Merger Tool voegt een hoofdrapport en de bijbehorende bijlagen samen tot één complete PDF. De applicatie maakt automatisch voorbladen voor de bijlagen, zet Word-, Excel- en PowerPoint-bestanden om naar PDF en voegt alles in de juiste volgorde samen.
 
-## Ontwikkelen in VS Code
+## Benodigdheden
 
-1. Installeer Python 3.10 of nieuwer (met tkinter) en Git. Voor de volledige conversie is Microsoft Office nodig.
-2. Open deze **map** in VS Code en installeer de aanbevolen extensies.
-3. Kies via `Ctrl+Shift+P` **Python: Create Environment**, kies **Venv** en selecteer `requirements-dev.txt`. Kies daarna zo nodig **Python: Select Interpreter** en selecteer `.venv`.
-4. Met **Tasks: Run Task** kun je de taken hieronder starten. De setup-taak kan dependencies later opnieuw installeren.
+- Windows
+- Microsoft Word voor het hoofdrapport en voorbladen
+- Microsoft Excel en/of PowerPoint wanneer deze bestandstypen als bijlage worden gebruikt
+- Een correct opgebouwde projectmap
 
-| Taak | Functie |
-| --- | --- |
-| Setup: dependencies installeren | Installeert runtime-dependencies en Ruff in de lokale `.venv`-omgeving |
-| Code: formatteren | Maakt de Python-opmaak consistent |
-| Code: opmaak controleren | Controleert opmaak zonder wijzigingen |
-| Code: lint controleren | Controleert imports en veelvoorkomende codefouten |
-| Tests: uitvoeren | Voert de unittest-tests uit zonder Office te starten |
-| Controle: alles | Voert opmaakcontrole, lint en tests achtereenvolgens uit; ook via `Ctrl+Shift+B` |
-| App: starten | Start de desktopapp voor een handmatige test |
-| GitHub: push huidige branch (na controles) | Pusht commits van de huidige branch naar `origin`, uitsluitend als alle controles slagen |
+De tool wordt gebruikt via de Windows-EXE. Python, VS Code en Git zijn niet nodig voor normaal gebruik.
 
-De taken gebruiken rechtstreeks `.venv/Scripts/python.exe` in de projectmap. Python wordt bij opslaan automatisch geformatteerd. Met `F5` kun je debuggen; tests zijn ook beschikbaar in het Testing-paneel.
+## Projectmap voorbereiden
 
-## Naar GitHub pushen
+Maak de projectmap als volgt op:
 
-De remote `origin` hoort te verwijzen naar https://github.com/TheEngineeringToolbox/TOOL_PDF_MERGER.git.
-Controleer je wijzigingen in Source Control en maak daar eerst een commit. Voer daarna de pushtaak uit. Deze maakt geen commit en gebruikt geen force-push. GitHub-aanmelding en schrijfrechten op de repository zijn vereist.
+```text
+Projectmap
+├── Rapportage.docx
+└── Bijlage
+    ├── Bijlage A - Locatie overzicht
+    │   ├── 01 Overzicht.pdf
+    │   └── 02 Tekening.pdf
+    ├── Bijlage B - Tekeningen
+    │   ├── 01 Plattegrond.pdf
+    │   └── 02 Doorsnede.xlsx
+    └── Bijlage 1 - Berekening
+        └── 01 Berekening.docx
+```
 
-## Testbereik
+Het hoofdrapport mag een andere bestandsnaam hebben, maar moet een `.docx`-bestand zijn. De map met bijlagen moet `Bijlage` heten. Bijlagemappen moeten beginnen met `Bijlage`, gevolgd door een nummer of letter, een koppelteken en een omschrijving. Bijvoorbeeld:
 
-De automatische tests controleren bijlage- en bestandsvolgorde, genegeerde tijdelijke bestanden, rapportvalidatie en paginavolgorde bij PDF-samenvoeging. Test Office-conversie en de GUI handmatig met een voorbeeldrapport en bijlagen. De centrale template- en logopaden staan bovenin `app.py` en moeten voor die test bereikbaar zijn.
+```text
+Bijlage A - Locatie overzicht
+Bijlage 1 - Berekening
+```
 
-## EXE bouwen en versiebeheer
+De tool ondersteunt PDF, Word (`.doc` en `.docx`), Excel (`.xls`, `.xlsx` en `.xlsm`) en PowerPoint (`.ppt` en `.pptx`). Bestanden worden binnen elke bijlage op natuurlijke bestandsnaamvolgorde verwerkt. Tijdelijke bestanden (`~$...`), `desktop.ini`, `Thumbs.db`, `.tmp`- en `.bak`-bestanden worden overgeslagen.
 
-Voer eerst **Setup: dependencies installeren** uit. Start daarna **Build: EXE maken** via **Tasks: Run Task**. Deze taak controleert opmaak, lint en tests en bouwt vervolgens met PyInstaller. `build/build_exe.bat` gebruikt dezelfde bouwprocedure en de lokale `.venv`.
+## Een complete PDF maken
 
-`APP_VERSION` in `app.py` is de centrale versiebron voor de app en de Windows EXE-eigenschappen. Gebruik **Versie: patch verhogen** voor reparaties, **Versie: minor verhogen** voor functionaliteit of **Versie: major verhogen** voor incompatibele wijzigingen. Controleer en commit de versiewijziging; een build verhoogt de versie niet.
+1. Start bijvoorbeeld `Rapportage Merger Tool.exe`.
+2. Klik op **Kies DOCX...**.
+3. Selecteer het hoofdrapport (`.docx`). De projectmap wordt automatisch bepaald.
+4. Controleer in **Preview PDF-opbouw** of het rapport, alle bijlagen, de nummering, de volgorde en de bestanden per bijlage kloppen.
+5. Klik op **GENEREER COMPLETE PDF**.
+6. Wacht tot de voortgang 100% bereikt en de status **Gereed** toont.
 
-Elke build komt in een eigen map onder `dist/`, met versie, Git-commit, eventuele `dirty`-markering en UTC-buildtijd. `build-info.json` bevat herkomst en SHA-256; `dependencies.txt` legt de gebruikte pakketten vast. Bestaande builds worden niet verwijderd. Nieuw gegenereerde bestanden onder `temp/` en `dist/` worden genegeerd door Git; historische, al gevolgde bestanden blijven voorlopig gevolgd.
+De PDF wordt opgeslagen in de map `PDF rapportage` binnen de projectmap. De bestandsnaam is `<naam van hoofdrapport>_compleet.pdf`, bijvoorbeeld `Rapportage_compleet.pdf`.
 
-### Branches en releases
+## Volgorde van de PDF
 
-Ontwikkel op `codex/development`; `master` blijft de stabiele branch. De bestaande pushtaak pusht de huidige branch. Maak voor een release een pull request van `codex/development` naar `master`. Bouw na het samenvoegen vanuit een schone checkout van `master`, test de EXE met Office en maak vervolgens een Git-tag `vX.Y.Z` bij die commit. Publiceer de geteste EXE en de vereiste licentie/compliance-bestanden als losse release-assets. Upload geen eigen ZIP of source-bundle. GitHub kan bij een release automatisch platformgegenereerde broncode-archieven tonen; die horen niet bij de door TOOL gepubliceerde release-assets. Builds met `dirty` bevatten lokale wijzigingen en zijn ontwikkelbuilds. De taken maken geen tags, commits of GitHub-releases automatisch.
+De uiteindelijke PDF bestaat uit het hoofdrapport, gevolgd door het voorblad van elke bijlage en daarna de bestanden uit die bijlage. Bijlagen met nummers komen vóór bijlagen met letters. Nummers worden numeriek gesorteerd (`Bijlage 2` vóór `Bijlage 10`), gevolgd door letterbijlagen (`Bijlage A`, `Bijlage B`). Pas namen aan wanneer de volgorde niet klopt en genereer opnieuw.
+
+## Bijlagen wijzigen
+
+Pas het betreffende bestand aan in de juiste bijlagemap. Selecteer daarna het hoofdrapport opnieuw en genereer de complete PDF opnieuw. De voorbladen en de samengestelde PDF worden opnieuw gemaakt.
+
+## Belangrijke aandachtspunten
+
+- Sluit de uitvoer-PDF in Adobe Reader, Edge of een andere PDF-viewer voordat je opnieuw genereert; een geopende PDF kan niet worden overschreven.
+- Wijzig of verwijder het centrale voorbladtemplate en het TOOL-logo niet.
+- Gebruik geen tijdelijk Word-bestand dat met `~$` begint.
+- Controleer vóór het genereren altijd de preview.
+
+## Problemen oplossen
+
+### De map `Bijlage` wordt niet gevonden
+
+Controleer of de map direct in de projectmap staat en exact `Bijlage` heet. Controleer ook of de geselecteerde DOCX in de juiste projectstructuur staat.
+
+### Geen bijlagen gevonden
+
+Controleer of de submappen volgens dit patroon zijn benoemd:
+
+```text
+Bijlage A - Omschrijving
+Bijlage 1 - Omschrijving
+```
+
+Elke herkende bijlagemap moet ten minste één verwerkbaar bestand bevatten.
+
+### Een bestand kan niet worden geconverteerd
+
+Controleer of het bestandstype wordt ondersteund en of de bijbehorende Microsoft Office-toepassing beschikbaar is. Sluit het bestand wanneer het door een andere toepassing is vergrendeld.
+
+### Het genereren mislukt bij het opslaan
+
+Sluit de bestaande uitvoer-PDF en probeer opnieuw. Controleer daarnaast of je schrijfrechten hebt op de projectmap.
+
+Gebruik bij een probleem de exacte foutmelding uit het logvenster en vermeld de applicatieversie.
+
+## Versie controleren
+
+De versie staat in de titelbalk van de applicatie. Je kunt deze ook controleren via de Windows-eigenschappen van de `.exe`: rechtermuisknop op het bestand, **Eigenschappen**, tabblad **Details**.
 
 ## Licentie
 
-TOOL PDF Merger valt onder de aangepaste **TOOL Engineers B.V. Free Use and Redistribution License 1.0** in `LICENSE.txt`.
+De tool valt onder de [TOOL Engineers B.V. Free Use and Redistribution License 1.0](LICENSE.txt). Derde-partijcomponenten behouden hun eigen licenties; zie [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 
-Samengevat mag de software gratis worden gebruikt, ook intern binnen commerciële organisaties, en gratis in ongewijzigde vorm worden doorgegeven met behoud van de licentie- en copyrightvermeldingen. Zonder voorafgaande schriftelijke toestemming van **TOOL Engineers B.V.** mag de software niet worden verkocht, verhuurd, tegen betaling toegankelijk worden gemaakt, in een betaald softwarepakket worden opgenomen of in gewijzigde vorm worden verspreid. De volledige tekst in `LICENSE.txt` is leidend.
-
-Derde-partijcomponenten behouden hun eigen licenties. Zie `THIRD_PARTY_NOTICES.txt`. Voer na installatie van `requirements-dev.txt` handmatig `python build/check_licenses.py` uit om de actuele runtime-licenties te controleren. Dezelfde controle draait automatisch in GitHub Actions en als onderdeel van de releasebuild.
-
-Een geslaagde releasebuild plaatst naast de EXE ook `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt` en een uit de actieve buildomgeving gegenereerd `THIRD_PARTY_LICENSES.txt`. Nieuwe dependencylicenties die niet in de gecontroleerde allow-list vallen blokkeren de compliancecheck totdat ze expliciet zijn beoordeeld.
+© TOOL Engineers B.V.
