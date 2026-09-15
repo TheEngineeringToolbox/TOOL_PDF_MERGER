@@ -32,7 +32,7 @@ from lxml import etree as ET
 
 COMPANY_NAME = "TOOL Engineers B.V."
 APP_NAME = "Rapportage Merger Tool"
-APP_VERSION = "0.0.4"
+APP_VERSION = "0.1.1"
 ATTACHMENT_DIR_NAME = "Bijlage"
 TEMPLATE_PATH = Path(r"C:\TOOL\Templates\Rapportage_merge_tool\Bijlage voorbladen.docx")
 
