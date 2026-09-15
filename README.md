@@ -95,8 +95,3 @@ Gebruik bij een probleem de exacte foutmelding uit het logvenster en vermeld de 
 
 De versie staat in de titelbalk van de applicatie. Je kunt deze ook controleren via de Windows-eigenschappen van de `.exe`: rechtermuisknop op het bestand, **Eigenschappen**, tabblad **Details**.
 
-## Licentie
-
-De tool valt onder de [TOOL Engineers B.V. Free Use and Redistribution License 1.0](LICENSE.txt). Derde-partijcomponenten behouden hun eigen licenties; zie [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
-
-© TOOL Engineers B.V.
