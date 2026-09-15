@@ -213,6 +213,9 @@ def find_attachment_folders(project_dir: Path):
 
 
 class OfficeConverter:
+    COM_CALL_RETRIES = 8
+    COM_RETRY_DELAY_SECONDS = 0.75
+
     def __init__(self):
         if win32 is None:
             raise RuntimeError(
@@ -224,16 +227,46 @@ class OfficeConverter:
         self.powerpoint = None
 
     def start(self):
-        # DispatchEx prevents us from taking over the user's existing Office app.
-        self.word = win32.DispatchEx("Word.Application")
-        self.word.Visible = False
-        self.word.DisplayAlerts = WD_ALERTS_NONE
+        # The main report and attachment covers always need Word. Excel and
+        # PowerPoint are started lazily only when such an attachment occurs.
+        self._ensure_word()
 
-        self.excel = win32.DispatchEx("Excel.Application")
-        self.excel.Visible = False
-        self.excel.DisplayAlerts = False
+    def _ensure_word(self):
+        if self.word is None:
+            # DispatchEx prevents us from taking over the user's Office app.
+            self.word = self._retry_com(lambda: win32.DispatchEx("Word.Application"))
+            self._retry_com(lambda: setattr(self.word, "Visible", False))
+            self._retry_com(lambda: setattr(self.word, "DisplayAlerts", WD_ALERTS_NONE))
 
-        self.powerpoint = win32.DispatchEx("PowerPoint.Application")
+    def _ensure_excel(self):
+        if self.excel is None:
+            self.excel = self._retry_com(lambda: win32.DispatchEx("Excel.Application"))
+            self._retry_com(lambda: setattr(self.excel, "Visible", False))
+            self._retry_com(lambda: setattr(self.excel, "DisplayAlerts", False))
+
+    def _ensure_powerpoint(self):
+        if self.powerpoint is None:
+            self.powerpoint = self._retry_com(
+                lambda: win32.DispatchEx("PowerPoint.Application")
+            )
+
+    @classmethod
+    def _retry_com(cls, operation):
+        for attempt in range(cls.COM_CALL_RETRIES):
+            try:
+                return operation()
+            except Exception as exc:
+                # HRESULT 0x80010001 / RPC_E_CALL_REJECTED.
+                if getattr(exc, "hresult", None) != -2147418111:
+                    raise
+                if attempt == cls.COM_CALL_RETRIES - 1:
+                    raise RuntimeError(
+                        "Microsoft Office reageert niet op de conversie. "
+                        "Controleer of Word, Excel of PowerPoint een geopend "
+                        "dialoogvenster of een melding toont, sluit die melding "
+                        "en probeer daarna opnieuw."
+                    ) from exc
+                time.sleep(cls.COM_RETRY_DELAY_SECONDS)
 
     def stop(self):
         for app in (self.powerpoint, self.excel, self.word):
@@ -249,18 +282,21 @@ class OfficeConverter:
         self.word = None
 
     def word_to_pdf(self, source: Path, target: Path):
+        self._ensure_word()
         doc = None
         try:
-            doc = self.word.Documents.Open(
-                str(source.resolve()),
-                ReadOnly=True,
-                AddToRecentFiles=False,
-                Visible=False,
+            doc = self._retry_com(
+                lambda: self.word.Documents.Open(
+                    str(source.resolve()),
+                    ReadOnly=True,
+                    AddToRecentFiles=False,
+                    Visible=False,
+                )
             )
-            doc.ExportAsFixedFormat(
-                str(target.resolve()),
-                WD_EXPORT_FORMAT_PDF,
-                False,  # OpenAfterExport
+            self._retry_com(
+                lambda: doc.ExportAsFixedFormat(
+                    str(target.resolve()), WD_EXPORT_FORMAT_PDF, False
+                )
             )
         finally:
             if doc is not None:
@@ -270,20 +306,21 @@ class OfficeConverter:
                     pass
 
     def excel_to_pdf(self, source: Path, target: Path):
+        self._ensure_excel()
         book = None
         try:
-            book = self.excel.Workbooks.Open(
-                str(source.resolve()),
-                ReadOnly=True,
-                UpdateLinks=0,
-                AddToMru=False,
+            book = self._retry_com(
+                lambda: self.excel.Workbooks.Open(
+                    str(source.resolve()),
+                    ReadOnly=True,
+                    UpdateLinks=0,
+                    AddToMru=False,
+                )
             )
-            book.ExportAsFixedFormat(
-                WD_EXPORT_FORMAT_PDF,
-                str(target.resolve()),
-                0,  # quality: standard
-                True,  # include doc properties
-                False,  # ignore print areas
+            self._retry_com(
+                lambda: book.ExportAsFixedFormat(
+                    WD_EXPORT_FORMAT_PDF, str(target.resolve()), 0, True, False
+                )
             )
         finally:
             if book is not None:
@@ -293,16 +330,15 @@ class OfficeConverter:
                     pass
 
     def powerpoint_to_pdf(self, source: Path, target: Path):
+        self._ensure_powerpoint()
         presentation = None
         try:
-            presentation = self.powerpoint.Presentations.Open(
-                str(source.resolve()),
-                WithWindow=False,
+            presentation = self._retry_com(
+                lambda: self.powerpoint.Presentations.Open(
+                    str(source.resolve()), WithWindow=False
+                )
             )
-            presentation.SaveAs(
-                str(target.resolve()),
-                32,  # ppSaveAsPDF
-            )
+            self._retry_com(lambda: presentation.SaveAs(str(target.resolve()), 32))
         finally:
             if presentation is not None:
                 try:
@@ -633,8 +669,25 @@ def merge_pdfs(
                 )
 
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_pdf, "wb") as f:
-        writer.write(f)
+    # Eerst volledig naar een tijdelijk bestand schrijven. Zo blijft een
+    # bestaande PDF intact wanneer die bijvoorbeeld nog in Adobe Reader open is.
+    temporary_output = output_pdf.with_name(output_pdf.name + ".tmp")
+    try:
+        with open(temporary_output, "wb") as f:
+            writer.write(f)
+        try:
+            os.replace(temporary_output, output_pdf)
+        except PermissionError as exc:
+            raise RuntimeError(
+                f"De uitvoer-PDF is in gebruik en kan niet worden vervangen:\n"
+                f"{output_pdf.name}\n"
+                "Sluit deze PDF in Adobe Reader/Edge en probeer opnieuw."
+            ) from exc
+    finally:
+        try:
+            temporary_output.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     if pipeline:
         pipeline.force_update(
