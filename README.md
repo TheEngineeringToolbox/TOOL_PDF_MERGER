@@ -43,9 +43,12 @@ De tool ondersteunt PDF, Word (`.doc` en `.docx`), Excel (`.xls`, `.xlsx` en `.x
 1. Start bijvoorbeeld `Rapportage Merger Tool.exe`.
 2. Klik op **Kies DOCX...**.
 3. Selecteer het hoofdrapport (`.docx`). De projectmap wordt automatisch bepaald.
-4. Controleer in **Preview PDF-opbouw** of het rapport, alle bijlagen, de nummering, de volgorde en de bestanden per bijlage kloppen.
-5. Klik op **GENEREER COMPLETE PDF**.
-6. Wacht tot de voortgang 100% bereikt en de status **Gereed** toont.
+4. Controleer **Kenmerk**, **Versie** en **Datum**. De tool leest deze uit de ingebouwde TOOL-XML van het hoofdrapport. Vul ontbrekende gegevens aan; ingelezen waarden kun je aanpassen. Gebruik voor de datum `dd-mm-jjjj`.
+5. Controleer in **Preview PDF-opbouw** of het rapport, alle bijlagen, de nummering, de volgorde en de bestanden per bijlage kloppen.
+6. Klik op **GENEREER COMPLETE PDF**.
+7. Wacht tot de voortgang 100% bereikt en de status **Gereed** toont.
+
+Elk bijlagevoorblad toont rechtsboven het kenmerk en de versie (bijvoorbeeld `T-250801-013 v0`) met daaronder de datum (`dd. 12-10-2026`). Deze gegevens gelden voor alle bijlagevoorbladen. Aanpassingen in de tool worden niet teruggeschreven naar het hoofdrapport. Bij het opnieuw kiezen van een DOCX worden de gegevens opnieuw ingelezen.
 
 De PDF wordt opgeslagen in de map `PDF rapportage` binnen de projectmap. De bestandsnaam is `<naam van hoofdrapport>_compleet.pdf`, bijvoorbeeld `Rapportage_compleet.pdf`.
 

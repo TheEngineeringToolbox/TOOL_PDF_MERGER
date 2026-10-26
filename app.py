@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import posixpath
 import re
 import shutil
 import sys
@@ -9,6 +10,7 @@ import time
 import tkinter as tk
 import zipfile
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
@@ -32,7 +34,7 @@ from lxml import etree as ET
 
 COMPANY_NAME = "TOOL Engineers B.V."
 APP_NAME = "Rapportage Merger Tool"
-APP_VERSION = "0.1.1"
+APP_VERSION = "0.2.1"
 ATTACHMENT_DIR_NAME = "Bijlage"
 TEMPLATE_PATH = Path(r"C:\TOOL\Templates\Rapportage_merge_tool\Bijlage voorbladen.docx")
 
@@ -380,6 +382,151 @@ R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 NS = {"w": W_NS, "r": R_NS}
 
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+TOOL_FIELDS_NS = "http://www.toolengineers.nl/word/fields"
+REPORT_FIELDS = {
+    "kenmerk": "DocumentNummer",
+    "versie": "DocumentVersienummer",
+    "datum": "DocumentVersiedatum",
+}
+
+
+def read_report_metadata(docx: Path) -> dict[str, str]:
+    """Read TOOL custom XML, preferring the store bound to Word controls."""
+    empty = dict.fromkeys(REPORT_FIELDS, "")
+    parser = ET.XMLParser(resolve_entities=False, no_network=True)
+    with zipfile.ZipFile(docx) as archive:
+        bound_ids = set()
+        for name in archive.namelist():
+            if re.fullmatch(r"word/(document|header\d+|footer\d+)\.xml", name):
+                root = ET.fromstring(archive.read(name), parser)
+                for binding in root.xpath("//w:dataBinding", namespaces=NS):
+                    if TOOL_FIELDS_NS in binding.get(f"{{{W_NS}}}prefixMappings", ""):
+                        bound_ids.add(binding.get(f"{{{W_NS}}}storeItemID", "").upper())
+        candidates = []
+        for name in archive.namelist():
+            if not re.fullmatch(r"customXml/item\d+\.xml", name):
+                continue
+            root = ET.fromstring(archive.read(name), parser)
+            if root.tag != f"{{{TOOL_FIELDS_NS}}}mydata":
+                continue
+            values = {
+                ET.QName(node).localname.casefold(): (node.text or "").strip()
+                for node in root
+                if isinstance(node.tag, str)
+            }
+            metadata = {
+                key: values.get(field.casefold(), "")
+                for key, field in REPORT_FIELDS.items()
+            }
+            # Resolve the custom XML properties relationship; item numbers
+            # need not match after Word saves or removes an XML store.
+            store_id = ""
+            rel_path = posixpath.join(
+                "customXml/_rels", posixpath.basename(name) + ".rels"
+            )
+            if rel_path in archive.namelist():
+                rels = ET.fromstring(archive.read(rel_path), parser)
+                for rel in rels:
+                    if rel.get("Type", "").endswith("/customXmlProps"):
+                        target = posixpath.normpath(
+                            posixpath.join("customXml", rel.get("Target", ""))
+                        )
+                        props = ET.fromstring(archive.read(target), parser)
+                        store_id = props.get(
+                            "{http://schemas.openxmlformats.org/officeDocument/2006/customXml}itemID",
+                            "",
+                        ).upper()
+            candidates.append((store_id in bound_ids, metadata))
+    selected = [data for bound, data in candidates if bound]
+    if not selected:
+        # Never fall back to stale example stores when Word binds another store.
+        selected = [] if bound_ids else [data for _, data in candidates]
+    if not selected:
+        return empty
+    # Ambiguous values are left blank so the user can supply them explicitly.
+    return {
+        key: selected[0][key] if len({data[key] for data in selected}) == 1 else ""
+        for key in REPORT_FIELDS
+    }
+
+
+def validate_report_metadata(metadata: dict[str, str]) -> dict[str, str]:
+    values = {key: str(metadata.get(key, "")).strip() for key in REPORT_FIELDS}
+    missing = [key for key, value in values.items() if not value]
+    if missing:
+        raise ValueError("Vul de ontbrekende rapportgegevens in: " + ", ".join(missing))
+    if any("\n" in value or "\r" in value for value in values.values()):
+        raise ValueError("Rapportgegevens moeten op één regel staan.")
+    for date_format in (
+        "%d-%m-%Y",
+        "%Y-%m-%d",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%dT%H:%M:%SZ",
+    ):
+        try:
+            values["datum"] = datetime.strptime(values["datum"], date_format).strftime(
+                "%d-%m-%Y"
+            )
+            break
+        except ValueError:
+            continue
+    else:
+        raise ValueError("Vul een geldige datum in (dd-mm-jjjj).")
+    return values
+
+
+def align_cover_bars(part_xml: bytes, page_width_twips: int) -> bytes:
+    """Center the wide header/footer artwork on the physical page."""
+    root = ET.fromstring(part_xml)
+    wp_ns = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+    for anchor in root.iter(f"{{{wp_ns}}}anchor"):
+        extent = anchor.find(f"{{{wp_ns}}}extent")
+        if extent is None or int(extent.get("cx", "0")) < page_width_twips * 635 * 0.8:
+            continue
+        position = anchor.find(f"{{{wp_ns}}}positionH")
+        if position is None:
+            continue
+        position.set("relativeFrom", "page")
+        for child in list(position):
+            position.remove(child)
+        ET.SubElement(position, f"{{{wp_ns}}}align").text = "center"
+    return ET.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+
+
+def add_cover_metadata(header_xml: bytes, metadata: dict[str, str]) -> bytes:
+    """Add the two-line reference beside the existing anchored header artwork."""
+    root = ET.fromstring(header_xml)
+    paragraph = root.find("w:p", NS)
+    if paragraph is None:
+        paragraph = ET.SubElement(root, f"{{{W_NS}}}p")
+    properties = paragraph.find("w:pPr", NS)
+    if properties is None:
+        properties = ET.Element(f"{{{W_NS}}}pPr")
+        paragraph.insert(0, properties)
+    for tag, attrs in (
+        ("spacing", {"before": "0", "after": "0"}),
+        ("ind", {"right": "-567"}),
+        ("jc", {"val": "right"}),
+    ):
+        node = properties.find(f"w:{tag}", NS)
+        if node is None:
+            node = ET.SubElement(properties, f"{{{W_NS}}}{tag}")
+        for key, value in attrs.items():
+            node.set(f"{{{W_NS}}}{key}", value)
+    run = ET.SubElement(paragraph, f"{{{W_NS}}}r")
+    rpr = ET.SubElement(run, f"{{{W_NS}}}rPr")
+    fonts = ET.SubElement(rpr, f"{{{W_NS}}}rFonts")
+    for key in ("ascii", "hAnsi", "cs"):
+        fonts.set(f"{{{W_NS}}}{key}", "Calibri")
+    ET.SubElement(rpr, f"{{{W_NS}}}color").set(f"{{{W_NS}}}val", "000000")
+    ET.SubElement(rpr, f"{{{W_NS}}}sz").set(f"{{{W_NS}}}val", "20")
+    version = metadata["versie"]
+    if not version.lower().startswith("v"):
+        version = "v" + version
+    ET.SubElement(run, f"{{{W_NS}}}t").text = f"{metadata['kenmerk']} {version}"
+    ET.SubElement(run, f"{{{W_NS}}}br")
+    ET.SubElement(run, f"{{{W_NS}}}t").text = f"dd. {metadata['datum']}"
+    return ET.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
 
 
 def set_paragraph_text_preserve_format(paragraph, text: str):
@@ -422,6 +569,7 @@ def make_dynamic_cover(
     attachment_number: str,
     attachment_title: str,
     item_titles: list[str],
+    metadata: dict[str, str] | None = None,
 ):
     """
     Create a one-page cover from the first page of Voorbladen.docx.
@@ -547,6 +695,12 @@ def make_dynamic_cover(
         )
 
         output_docx.parent.mkdir(parents=True, exist_ok=True)
+        page_size = sectPr.find("w:pgSz", NS) if sectPr is not None else None
+        page_width = (
+            int(page_size.get(f"{{{W_NS}}}w", "11906"))
+            if page_size is not None
+            else 11906
+        )
 
         with zipfile.ZipFile(output_docx, "w", zipfile.ZIP_DEFLATED) as zout:
             for item in zin.infolist():
@@ -555,6 +709,10 @@ def make_dynamic_cover(
                     if item.filename == "word/document.xml"
                     else zin.read(item.filename)
                 )
+                if re.fullmatch(r"word/(header|footer)\d+\.xml", item.filename):
+                    data = align_cover_bars(data, page_width)
+                if metadata and re.fullmatch(r"word/header\d+\.xml", item.filename):
+                    data = add_cover_metadata(data, metadata)
                 zout.writestr(item, data)
 
 
@@ -701,9 +859,14 @@ def merge_pdfs(
 # ---------------------------------------------------------------------------
 
 
-def generate(project_dir: Path, main_docx: Path, progress_callback=None) -> Path:
+def generate(
+    project_dir: Path, main_docx: Path, progress_callback=None, metadata=None
+) -> Path:
     project_dir = project_dir.resolve()
     main_docx = validate_main_docx(main_docx)
+    metadata = validate_report_metadata(
+        read_report_metadata(main_docx) if metadata is None else metadata
+    )
     attachment_folders = find_attachment_folders(project_dir)
 
     template = get_template_path()
@@ -763,6 +926,7 @@ def generate(project_dir: Path, main_docx: Path, progress_callback=None) -> Path
                 attachment_number=number,
                 attachment_title=title,
                 item_titles=item_titles,
+                metadata=metadata,
             )
 
             converter.word_to_pdf(cover_docx, cover_pdf)
@@ -850,6 +1014,11 @@ class App:
 
         self.project_var = tk.StringVar()
         self.docx_var = tk.StringVar()
+        self.metadata_vars = {key: tk.StringVar() for key in REPORT_FIELDS}
+        self._metadata_docx = None
+        self.metadata_status_var = tk.StringVar(
+            value="Kies een hoofdrapport om de rapportgegevens in te laden."
+        )
         self.status_var = tk.StringVar(
             value="Selecteer eerst het gewenste Word-bestand (.docx)."
         )
@@ -908,11 +1077,13 @@ class App:
         docx_row = tk.Frame(frame)
         docx_row.pack(fill="x", pady=(4, 10))
 
-        tk.Entry(
+        docx_entry = tk.Entry(
             docx_row,
             textvariable=self.docx_var,
             font=("Segoe UI", 10),
-        ).pack(side="left", fill="x", expand=True)
+        )
+        docx_entry.pack(side="left", fill="x", expand=True)
+        docx_entry.bind("<FocusOut>", lambda event: self.load_report_metadata())
 
         tk.Button(
             docx_row,
@@ -937,10 +1108,43 @@ class App:
             state="readonly",
         ).pack(side="left", fill="x", expand=True)
 
+        tk.Label(
+            frame,
+            text="3. Rapportgegevens voor bijlagevoorbladen",
+            font=("Segoe UI", 10, "bold"),
+        ).pack(anchor="w", pady=(6, 4))
+        metadata_row = tk.Frame(frame)
+        metadata_row.pack(fill="x")
+        self.metadata_entries = {}
+        for column, (key, label) in enumerate(
+            (
+                ("kenmerk", "Kenmerk"),
+                ("versie", "Versie"),
+                ("datum", "Datum (dd-mm-jjjj)"),
+            )
+        ):
+            metadata_row.columnconfigure(column, weight=1)
+            cell = tk.Frame(metadata_row)
+            cell.grid(row=0, column=column, sticky="ew", padx=(0, 10))
+            tk.Label(cell, text=label, font=("Segoe UI", 10)).pack(anchor="w")
+            entry = tk.Entry(
+                cell, textvariable=self.metadata_vars[key], font=("Segoe UI", 10)
+            )
+            entry.pack(fill="x")
+            self.metadata_entries[key] = entry
+        tk.Label(
+            frame,
+            textvariable=self.metadata_status_var,
+            anchor="w",
+            justify="left",
+            wraplength=850,
+            font=("Segoe UI", 9),
+        ).pack(fill="x", pady=(4, 10))
+
         # Preview van de uiteindelijke PDF-opbouw
         tk.Label(
             frame,
-            text="3. Preview PDF-opbouw",
+            text="4. Preview PDF-opbouw",
             font=("Segoe UI", 10, "bold"),
         ).pack(anchor="w", pady=(6, 4))
 
@@ -1029,6 +1233,8 @@ class App:
 
         docx = Path(filename).resolve()
         self.docx_var.set(str(docx))
+        self._metadata_docx = None
+        self.load_report_metadata()
 
         project_dir = docx.parent
         candidate = project_dir
@@ -1056,6 +1262,49 @@ class App:
             "DOCX geselecteerd. Controleer de preview en klik daarna op "
             "'GENEREER COMPLETE PDF'."
         )
+
+    def load_report_metadata(self):
+        text = self.docx_var.get().strip()
+        path = Path(text).resolve() if text else None
+        if path == self._metadata_docx:
+            return
+        for variable in self.metadata_vars.values():
+            variable.set("")
+        self._metadata_docx = None
+        if path is None:
+            return
+        try:
+            metadata = read_report_metadata(validate_main_docx(path))
+        except (
+            OSError,
+            ValueError,
+            zipfile.BadZipFile,
+            ET.XMLSyntaxError,
+            KeyError,
+        ) as exc:
+            self.metadata_status_var.set(
+                f"Rapportgegevens konden niet worden ingelezen: {exc}"
+            )
+            return
+        self._metadata_docx = path
+        for key, variable in self.metadata_vars.items():
+            value = metadata[key]
+            if key == "datum" and value:
+                try:
+                    value = datetime.fromisoformat(
+                        value.replace("Z", "+00:00")
+                    ).strftime("%d-%m-%Y")
+                except ValueError:
+                    pass
+            variable.set(value)
+        missing = [key for key, value in metadata.items() if not value]
+        self.metadata_status_var.set(
+            "Vul de ontbrekende rapportgegevens in: " + ", ".join(missing) + "."
+            if missing
+            else "Gegevens ingelezen uit het hoofdrapport. Je kunt ze hier aanpassen."
+        )
+        if missing:
+            self.metadata_entries[missing[0]].focus_set()
 
     def update_preview(self):
         """Refresh the tree showing the expected PDF sequence."""
@@ -1228,6 +1477,15 @@ class App:
             messagebox.showerror(APP_NAME, "De projectmap bestaat niet.")
             return
 
+        self.load_report_metadata()
+        try:
+            metadata = validate_report_metadata(
+                {key: variable.get() for key, variable in self.metadata_vars.items()}
+            )
+        except ValueError as exc:
+            messagebox.showwarning(APP_NAME, str(exc))
+            return
+
         self.generate_button.config(state="disabled")
 
         # Start elke generatie met een schone log.
@@ -1243,7 +1501,7 @@ class App:
             self.write_log(f"Hoofdrapport: {main_docx.name}")
             self.write_log(f"Projectmap: {project_dir}")
             self.write_log("Start...")
-            generate(project_dir, main_docx, self.update_progress)
+            generate(project_dir, main_docx, self.update_progress, metadata=metadata)
         except Exception as exc:
             self.write_log(f"FOUT: {exc}")
             messagebox.showerror(APP_NAME, f"Genereren is mislukt:\n\n{exc}")

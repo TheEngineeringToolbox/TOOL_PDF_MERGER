@@ -34,6 +34,12 @@ GEBRUIK
 2. Klik op "Kies DOCX" en selecteer de gewenste rapportage.
 
 3. Controleer de weergegeven preview van de PDF-opbouw.
+   Controleer ook Kenmerk, Versie en Datum. Deze gegevens worden uit
+   de ingebouwde TOOL-XML van het hoofdrapport ingelezen. Vul ontbrekende
+   waarden in en gebruik voor de datum dd-mm-jjjj.
+   Elk bijlagevoorblad toont rechtsboven het kenmerk met de versie en
+   daaronder de datum. Wijzigingen in deze velden gelden alleen voor de
+   bijlagevoorbladen en worden niet in het hoofdrapport opgeslagen.
 
 4. Controleer of:
    - het hoofdrapport aanwezig is;
